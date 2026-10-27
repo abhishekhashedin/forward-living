@@ -56,20 +56,15 @@
           </div>
           <div class="purchase-panel">
               <div class="purchase-price"><span class="price-current">₹509</span><span class="price-original">₹799</span><span class="price-discount">36% off</span></div>
-              <p class="purchase-note">Digital PDF</p>
-              <a
+              <p class="purchase-note">Digital PDF · Secure checkout powered by Instamojo</p>
+              <button
                 id="instamojo-product-pay"
                 class="button button-primary purchase-button"
-                href="https://forwardliving.myinstamojo.com/product/out-of-debt/"
-                data-store-name="forwardliving"
-                data-domain="https://forwardliving.myinstamojo.com"
-                data-id="7531896"
-                rel="im-new-checkout"
-                data-text="Buy Now"
-                data-css-style="background:#245d50; color:#ffffff; width:300px; border-radius:4px"
-                data-layout="vertical"
-              >Buy Now</a>
-              <p class="checkout-note" id="checkout-note" role="status">Start today—take control of your debt.</p>
+                type="button"
+                onclick="startInstamojoCheckout()"
+              >Buy the PDF — ₹509</button>
+              <p class="checkout-note" id="checkout-note" role="status">Secure checkout powered by Instamojo.</p>
+              <noscript><p class="checkout-note">Please enable JavaScript to start checkout.</p></noscript>
             </div>
         </div>
       </div>
@@ -112,7 +107,46 @@
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
   </script>
-  <!-- Use the exact Instamojo Pay Button integration script from the dashboard. -->
-  <script src="https://manage.instamojo.com/assets/js/pay_button/button.min.js"></script>
+  <!-- Instamojo's documented checkout SDK. Payment Requests are created server-side. -->
+  <script src="https://js.instamojo.com/v1/checkout.js"></script>
+  <script>
+    async function startInstamojoCheckout() {
+      const button = document.getElementById('instamojo-product-pay');
+      const note = document.getElementById('checkout-note');
+      button.disabled = true;
+      button.setAttribute('aria-busy', 'true');
+      note.textContent = 'Preparing secure checkout…';
+      try {
+        const response = await fetch('/api/create-payment-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const result = await response.json();
+        if (!response.ok || !result.paymentUrl) {
+          throw new Error(result.error || 'Checkout could not be started. Please try again.');
+        }
+        const separator = result.paymentUrl.includes('?') ? '&' : '?';
+        Instamojo.open(result.paymentUrl + separator + 'embed=form');
+        note.textContent = 'Complete your payment in the Instamojo checkout window.';
+      } catch (error) {
+        note.textContent = error.message || 'Checkout could not be started. Please try again.';
+      } finally {
+        button.disabled = false;
+        button.removeAttribute('aria-busy');
+      }
+    }
+    Instamojo.configure({
+      handlers: {
+        onSuccess: function () {
+          const note = document.getElementById('checkout-note');
+          note.textContent = 'Instamojo reports that checkout completed. Please wait for payment confirmation and digital delivery.';
+        },
+        onFailure: function () {
+          document.getElementById('checkout-note').textContent = 'Payment was not completed. You can try again.';
+        }
+      }
+    });
+  </script>
 </body>
 </html>
