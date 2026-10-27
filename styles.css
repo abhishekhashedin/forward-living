@@ -16,3 +16,27 @@
   min-width: 210px;
 }.purchase-button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .checkout-note{margin:12px 0 0;font-size:10px}
+
+.legal-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  align-items: center;
+}
+
+.legal-links a {
+  color: var(--muted);
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.legal-links a:hover {
+  color: var(--green);
+  text-decoration: underline;
+}
+
+@media (max-width: 520px) {
+  .legal-links {
+    gap: 10px 14px;
+  }
+}
