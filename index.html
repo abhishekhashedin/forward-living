@@ -57,8 +57,19 @@
           <div class="purchase-panel">
               <div class="purchase-price"><span class="price-current">₹509</span><span class="price-original">₹799</span><span class="price-discount">36% off</span></div>
               <p class="purchase-note">Digital PDF · Secure checkout powered by Instamojo</p>
-              <button class="button button-primary purchase-button" id="buy-pdf" type="button">Buy the PDF <span aria-hidden="true">↗</span></button>
-              <p class="checkout-note" id="checkout-note" role="status">Checkout opens securely through Instamojo.</p>
+              <a
+                id="instamojo-product-pay"
+                class="button button-primary purchase-button"
+                href="https://forwardliving.myinstamojo.com/product/out-of-debt/"
+                data-store-name="forwardliving"
+                data-domain="https://forwardliving.myinstamojo.com"
+                data-id="7531896"
+                rel="im-new-checkout"
+                data-text="Buy the PDF — ₹509"
+                data-css-style="background:#245d50; color:#ffffff; width:300px; border-radius:4px"
+                data-layout="vertical"
+              >Buy the PDF — ₹509</a>
+              <p class="checkout-note" id="checkout-note" role="status">Secure checkout powered by Instamojo. PDF delivery is handled by Instamojo after successful payment.</p>
             </div>
         </div>
       </div>
@@ -98,23 +109,10 @@
     <p>© <span id="year">2026</span> Forward Living · Abhishek Yadav</p>
     <a href="#top" class="back-top">Back to top ↑</a>
   </footer>
-  <script src="https://js.instamojo.com/v1/checkout.js"></script>
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
-
-    // Public Instamojo product URL. Confirm with Instamojo that this URL is
-    // enabled for Seamless Checkout; if they provide a dedicated payment URL,
-    // replace this value with that URL.
-    const INSTAMOJO_PAYMENT_URL = 'https://forwardliving.myinstamojo.com/product/out-of-debt/';
-
-    document.getElementById('buy-pdf').addEventListener('click', function () {
-      if (window.Instamojo && typeof window.Instamojo.open === 'function') {
-        window.Instamojo.open(INSTAMOJO_PAYMENT_URL);
-      } else {
-        // Fallback if the checkout script fails to load.
-        window.open(INSTAMOJO_PAYMENT_URL, '_blank', 'noopener,noreferrer');
-      }
-    });
   </script>
+  <!-- Use the exact Instamojo Pay Button integration script from the dashboard. -->
+  <script src="https://manage.instamojo.com/assets/js/pay_button/button.min.js"></script>
 </body>
 </html>
