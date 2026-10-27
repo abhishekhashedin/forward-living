@@ -56,14 +56,14 @@
           </div>
           <div class="purchase-panel">
               <div class="purchase-price"><span class="price-current">₹509</span><span class="price-original">₹799</span><span class="price-discount">36% off</span></div>
-              <p class="purchase-note">Digital PDF · Secure checkout powered by Instamojo</p>
+              <p class="purchase-note">Digital PDF · Secure checkout powered by Razorpay</p>
               <button
-                id="instamojo-product-pay"
+                id="razorpay-product-pay"
                 class="button button-primary purchase-button"
                 type="button"
-                onclick="startInstamojoCheckout()"
+                onclick="startRazorpayCheckout()"
               >Buy Now</button>
-              <p class="checkout-note" id="checkout-note" role="status">Secure checkout powered by Instamojo.</p>
+              <p class="checkout-note" id="checkout-note" role="status">Secure checkout powered by Razorpay.</p>
               <noscript><p class="checkout-note">Please enable JavaScript to start checkout.</p></noscript>
             </div>
         </div>
@@ -113,28 +113,82 @@
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
   </script>
-  <!-- Instamojo's documented checkout SDK. Payment Requests are created server-side. -->
-  <script src="https://js.instamojo.com/v1/checkout.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script>
-    async function startInstamojoCheckout() {
-      const button = document.getElementById('instamojo-product-pay');
+    async function startRazorpayCheckout() {
+      const button = document.getElementById('razorpay-product-pay');
       const note = document.getElementById('checkout-note');
+      if (!window.Razorpay) {
+        note.textContent = 'Secure checkout could not load. Please refresh and try again.';
+        return;
+      }
       button.disabled = true;
       button.setAttribute('aria-busy', 'true');
       note.textContent = 'Preparing secure checkout…';
       try {
-        const response = await fetch('/api/create-payment-request', {
+        const response = await fetch('/api/create-order', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({})
         });
-        const result = await response.json();
-        if (!response.ok || !result.paymentUrl) {
-          throw new Error(result.error || 'Checkout could not be started. Please try again.');
+        const order = await response.json();
+        if (!response.ok || !order.orderId || !order.keyId) {
+          throw new Error(order.error || 'Checkout could not be started. Please try again.');
         }
-        const separator = result.paymentUrl.includes('?') ? '&' : '?';
-        Instamojo.open(result.paymentUrl + separator + 'embed=form');
-        note.textContent = 'Complete your payment in the Instamojo checkout window.';
+
+        const checkout = new Razorpay({
+          key: order.keyId,
+          amount: order.amount,
+          currency: order.currency,
+          name: 'Forward Living',
+          description: 'A Steadier Way Out of Debt — Digital PDF',
+          order_id: order.orderId,
+          theme: { color: '#234b3b' },
+          handler: async function (payment) {
+            note.textContent = 'Payment received. Verifying securely and preparing your download…';
+            try {
+              const verifyResponse = await fetch('/api/download-ebook', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  razorpay_order_id: payment.razorpay_order_id,
+                  razorpay_payment_id: payment.razorpay_payment_id,
+                  razorpay_signature: payment.razorpay_signature
+                })
+              });
+              if (!verifyResponse.ok) {
+                let message = 'We could not verify the payment yet. Please contact support before paying again.';
+                try {
+                  const error = await verifyResponse.json();
+                  if (error && error.error) message = error.error;
+                } catch (_) {}
+                throw new Error(message);
+              }
+              const pdf = await verifyResponse.blob();
+              const localUrl = URL.createObjectURL(pdf);
+              const link = document.createElement('a');
+              link.href = localUrl;
+              link.download = 'a-steadier-way-out-of-debt.pdf';
+              document.body.appendChild(link);
+              link.click();
+              link.remove();
+              setTimeout(() => URL.revokeObjectURL(localUrl), 60000);
+              note.textContent = 'Payment verified. Your ebook download should begin now. Please save the PDF safely.';
+            } catch (error) {
+              note.textContent = error.message || 'Payment was received, but delivery could not be completed. Contact support with your Razorpay payment ID.';
+            }
+          },
+          modal: {
+            ondismiss: function () {
+              note.textContent = 'Checkout closed. If you completed a payment, please wait for confirmation before trying again.';
+            }
+          }
+        });
+        checkout.on('payment.failed', function () {
+          note.textContent = 'Payment was not completed. You can try again.';
+        });
+        checkout.open();
+        note.textContent = 'Complete your payment in the secure Razorpay checkout.';
       } catch (error) {
         note.textContent = error.message || 'Checkout could not be started. Please try again.';
       } finally {
@@ -142,17 +196,6 @@
         button.removeAttribute('aria-busy');
       }
     }
-    Instamojo.configure({
-      handlers: {
-        onSuccess: function () {
-          const note = document.getElementById('checkout-note');
-          note.textContent = 'Instamojo reports that checkout completed. Please wait for payment confirmation and digital delivery.';
-        },
-        onFailure: function () {
-          document.getElementById('checkout-note').textContent = 'Payment was not completed. You can try again.';
-        }
-      }
-    });
   </script>
 </body>
 </html>
