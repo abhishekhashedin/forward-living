@@ -15,3 +15,42 @@ p,ul{margin:.7rem 0}li{margin:.35rem 0}
 footer{border-top:1px solid #d9d2bf;max-width:44rem;margin:0 auto;padding:1.5rem 1.25rem 3rem;font:.9rem/1.8 system-ui,sans-serif;color:#55625a}
 footer nav{display:flex;flex-wrap:wrap;gap:.4rem 1.25rem;margin-bottom:.6rem}
 @media(max-width:480px){body{font-size:16px}}
+/* Legal and support navigation */
+.legal-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 28px;
+  padding: 18px 0;
+  margin: 16px 0;
+  border-top: 1px solid rgba(23, 37, 33, 0.14);
+  border-bottom: 1px solid rgba(23, 37, 33, 0.14);
+}
+
+.legal-links a {
+  display: inline-block;
+  font-family: "DM Sans", Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: #245d50;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.legal-links a:hover {
+  color: #172521;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+@media (max-width: 600px) {
+  .legal-links {
+    gap: 10px 18px;
+    padding: 14px 0;
+  }
+
+  .legal-links a {
+    font-size: 13px;
+  }
+}
